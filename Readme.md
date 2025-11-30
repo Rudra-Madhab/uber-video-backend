@@ -57,8 +57,59 @@ curl -X POST http://localhost:4000/api/users/register \
   -H "Content-Type: application/json" \
   -d '{"fullname":{"firstname":"John","lastname":"Doe"},"email":"john@example.com","password":"secret123"}'
 
-  ### Example Response
+### Example Response
 
-  curl -X POST http://localhost:4000/api/users/register \
+curl -X POST http://localhost:4000/api/users/register \
   -H "Content-Type: application/json" \
   -d '{"fullname":{"firstname":"John","lastname":"Doe"},"email":"john@example.com","password":"secret123"}'
+
+### POST /api/users/login
+
+Description
+- Authenticate a user with email and password and receive a JWT token.
+
+Endpoint
+- Method: POST
+- URL: /api/users/login
+
+Request Headers
+- Content-Type: application/json
+
+Request Body (JSON)
+- Required shape:
+  {
+    "email": "string (valid email)",
+    "password": "string (required)"
+  }
+
+Validation
+- `email` must be a valid email.
+- `password` must be provided.
+
+Behavior
+- The controller validates input using express-validator.
+- Finds the user by email and includes the hashed password for comparison.
+- Compares provided password with stored hash using bcrypt.
+- On success returns a JWT token and the user object.
+
+Responses
+- 200 OK
+  - Body example:
+    {
+      "token": "<JWT token string>",
+      "user": { /* user object (may include fields per model) */ }
+    }
+- 400 Bad Request
+  - Returned when input validation fails. Body contains `errors` array from `express-validator`.
+- 401 Unauthorized
+  - Returned when email or password is incorrect.
+- 500 Internal Server Error
+  - Returned on unexpected server/database errors.
+
+Example Request (curl)
+curl -X POST http://localhost:4000/api/users/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"john@example.com","password":"secret123"}'
+
+
+  
