@@ -1,6 +1,8 @@
+const jwt = require('jsonwebtoken');
 const userModel = require('../models/user.model');
+const blacklistedTokenModel = require('../models/blacklistToken.model');
+
 const { validationResult } = require('express-validator');
-const blacklistTokenModel = require('../models/blacklistToken.model');
 
 // ------------------------
 // Register User
@@ -14,29 +16,28 @@ module.exports.registerUser = async (req, res) => {
 
         const { fullname, email, password } = req.body;
 
-        const isUserAlreadyExist = await userModel.findOne({email});
-
-        if (isUserAlreadyExist) {
+        const isUserExist = await userModel.findOne({ email });
+        if (isUserExist) {
             return res.status(400).json({ message: 'User with this email already exists' });
         }
 
-        // Hash password using static method in userModel
+        // Hash password
         const hashPassword = await userModel.hashPassword(password);
 
-        // Create user in database
+        // Create user
         const user = await userModel.create({
             fullname: {
                 firstname: fullname.firstname,
-                lastname: fullname.lastname
+                lastname: fullname.lastname || ''
             },
             email,
             password: hashPassword
         });
 
-        // Generate JWT token
+        // Generate token
         const token = user.generateAuthToken();
 
-        // Optionally, set token as cookie
+        // Set token as cookie
         res.cookie('token', token, { httpOnly: true });
 
         return res.status(201).json({ token, user });
@@ -56,7 +57,6 @@ module.exports.loginUser = async (req, res) => {
         }
 
         const { email, password } = req.body;
-
         const user = await userModel.findOne({ email }).select('+password');
 
         if (!user) {
@@ -69,8 +69,6 @@ module.exports.loginUser = async (req, res) => {
         }
 
         const token = user.generateAuthToken();
-
-        // Optionally, set token as cookie
         res.cookie('token', token, { httpOnly: true });
 
         return res.status(200).json({ token, user });
@@ -101,10 +99,10 @@ module.exports.logoutUser = async (req, res) => {
         // Clear cookie
         res.clearCookie('token');
 
-        // Get token from cookie or Authorization header
+        // Get token
         const token = req.cookies?.token || req.headers.authorization?.split(' ')[1];
 
-        // Add token to blacklist
+        // Blacklist token
         if (token) {
             await blacklistTokenModel.create({ token });
         }

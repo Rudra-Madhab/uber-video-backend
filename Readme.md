@@ -295,3 +295,129 @@ Responses
 Example Request (curl)
 curl -X GET http://localhost:4000/api/users/logout \
   -H "Authorization: Bearer <JWT token>"
+
+
+### Example Response
+
+- `captain` (object) :
+- `fullname` (object).
+- `firstname` (string): User's first name 
+-`lastname` (string): user's last name  
+-`email`(string) : User's email adreess 
+- `password` (string) : User's password 
+-`vechile` (object)
+-`color` (string) vechile color (minimum)
+- `capacity` (number) vechile capacity
+- `vechileType` (string) vechile type
+
+-`plate` (string) vechile number plate 
+
+
+- `token` (String) JWT token
+
+**Captains API — /api/captains**
+
+Description
+- Manage captain accounts (register, login, profile, logout) and receive a JWT token.
+
+Base route
+- Mounted in `Backend/app.js` as `app.use('/api/captains', captainRoutes)` and implemented in `Backend/routes/captain.routes.js`.
+
+Authentication
+- The JWT is set as an HTTP-only cookie named `token` on login/register and may also be sent in the `Authorization: Bearer <token>` header.
+
+1) POST /api/captains/register
+- Description: Create a new captain account and return a JWT token.
+- Request Headers: `Content-Type: application/json`
+- Request Body (JSON):
+
+{
+  "fullname": "string (min 3 chars)", // required: captain's full name
+  "email": "string (valid email)", // required
+  "password": "string (min 6 chars)", // required
+  "vehicle": {
+    "color": "string (min 3 chars)", // required
+    "plate": "string (min 3 chars)", // required
+    "capacity": 2, // number, required, min 1
+    "type": "bike" // required, one of: bike, car, auto
+  }
+}
+
+- Validation (see `Backend/routes/captain.routes.js`):
+  - `email` must be a valid email
+  - `fullname` length >= 3
+  - `password` length >= 6
+  - `vehicle.color` length >= 3
+  - `vehicle.plate` length >= 3
+  - `vehicle.capacity` integer >= 1
+  - `vehicle.type` one of `bike`, `car`, `auto`
+
+- Success Response (201 Created):
+
+{
+  "token": "<JWT token string>",
+  "captain": {
+    "_id": "<id>",
+    "fullname": "string",
+    "email": "string",
+    "vehicle": {
+      "color": "string",
+      "plate": "string",
+      "capacity": 2,
+      "type": "string"
+    }
+    // Note: password is NOT included in the response
+  }
+}
+
+2) POST /api/captains/login
+- Description: Authenticate a captain with email and password and receive a JWT token.
+- Request Headers: `Content-Type: application/json`
+- Request Body (JSON):
+
+{
+  "email": "string (valid email)", // required
+  "password": "string (min 6 chars)" // required
+}
+
+- Success Response (200 OK):
+
+{
+  "token": "<JWT token string>",
+  "captain": {
+    "_id": "<id>",
+    "fullname": "string",
+    "email": "string",
+    "vehicle": { /* same shape as above */ }
+  }
+}
+
+3) GET /api/captains/profile
+- Description: Retrieve authenticated captain profile. Protected route.
+- Authentication: Cookie `token` (HTTP-only) or `Authorization: Bearer <token>` header.
+- Success Response (200 OK):
+
+{
+  "message": "Captain fetched successfully",
+  "captain": {
+    "_id": "<id>",
+    "fullname": "string",
+    "email": "string",
+    "vehicle": { /* color, plate, capacity, type */ }
+  }
+}
+
+4) GET /api/captains/logout
+- Description: Logout the authenticated captain; clears the cookie and blacklists the token.
+- Authentication: Cookie `token` or `Authorization` header required.
+- Success Response (200 OK):
+
+{
+  "message": "Logged out successfully"
+}
+
+Notes
+- On logout the token (from cookie or header) is saved to the blacklist collection (`Backend/models/blacklistToken.model.js`) to prevent reuse.
+- Controller behavior and helpers: see `Backend/controllers/captain.controller.js` and `Backend/services/captain.service.js` for implementation details.
+
+

@@ -28,3 +28,4 @@ app.use('/api/captains', captainRoutes);
 
 
 module.exports = app;
+

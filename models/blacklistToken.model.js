@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const blacklistTokenSchema = new mongoose.Schema({
+const blacklistedTokenSchema = new mongoose.Schema({
     token: {
         type: String,
         required: true,
@@ -9,8 +9,8 @@ const blacklistTokenSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now,
-        expires: 86400 // Token will be removed after 24 hours
+        expires: 86400 // Token will be automatically removed after 24 hours
     }
 });
-    
-module.exports = mongoose.model('BlacklistToken', blacklistTokenSchema);
+
+module.exports = mongoose.model('BlacklistedToken', blacklistedTokenSchema);
